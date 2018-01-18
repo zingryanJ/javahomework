@@ -4,6 +4,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
+
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.*;
 
@@ -12,15 +14,26 @@ public class pingapp{
 	private JFrame frame;
 	private ArrayList<myip> iplist = new ArrayList<myip>();
 	
+	
 	public static void main(String[] args) {
 		pingapp ping = new pingapp();
 		ping.showUI();
 	}
 	
+	
 	public void showUI(){
 		Font bigFont = new Font("sanserif",Font.BOLD,15);
 //		声明组件
 		frame = new JFrame();
+		
+		try {
+			String src = "/img/Pingcon.jpg";
+			Image image=ImageIO.read(this.getClass().getResource(src));
+			frame.setIconImage(image);   
+		}catch(IOException e) {
+			e.printStackTrace();
+		}
+		
 		JPanel westpan = new JPanel();
 		JPanel centpan = new JPanel();
 		JPanel eastpan = new JPanel();
@@ -52,6 +65,15 @@ public class pingapp{
 		jsjt.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		jsjt.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		
+		String[] tbti = {"IP","状态"};
+		
+		
+		JTable jtb = new JTable();
+		
+		JScrollPane jstb = new JScrollPane();
+		jstb.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		jstb.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		
 		JButton startbt = new JButton("确定");
 		startbt.addActionListener(new startping());
 		eastpan.add(startbt);
@@ -64,7 +86,7 @@ public class pingapp{
 		centpan.add(jsjt);
 		
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setTitle("PingIPapp");
+		frame.setTitle("监控部专用IP工具");
 //		尺寸
 		frame.setSize(1000, 600);
 //		打开位置为中央
@@ -78,23 +100,40 @@ public class pingapp{
 		frame.setResizable(false);
 		frame.setVisible(true);
 	}
+	
+	
 	public class startping implements ActionListener{
 		public void actionPerformed(ActionEvent e) {
+			iplist.clear();
 			String statue = null;
+			String zan = null;
 			String[] allip = jt.getText().split("\n");
 			for(String i : allip) {
-				statue =ping(i);
-				myip mip = new myip(i, statue); 
-				iplist.add(mip);
+				if(i.split("\\.")[3].equals("x")) {
+					for(int z=1;z<=126;z++) {
+						zan=i.substring(0,i.length()-1)+z;
+						statue =ping(zan);
+						myip mip = new myip(zan, statue); 
+						iplist.add(mip);
+					}
+				}else{
+					statue =ping(i);
+					myip mip = new myip(i, statue); 
+					iplist.add(mip);
+				}
 			}
 			JOptionPane.showMessageDialog(null, "完成");
 		}
 	}
+	
+	
 	public class restall implements ActionListener{
 		public void actionPerformed(ActionEvent e) {
 			resta();
 		}
 	}
+	
+	
 	public class savefile implements ActionListener{
 		public void actionPerformed(ActionEvent e){
 			JFileChooser fileSave = new JFileChooser();
@@ -103,6 +142,7 @@ public class pingapp{
 			saveFile(fileSave.getSelectedFile());
 		}
 	}
+	
 	
 	private String ping(String i) {
 		Runtime runtime = Runtime.getRuntime(); // 获取当前程序的运行进对象
@@ -115,7 +155,7 @@ public class pingapp{
 		String result = null;
 		boolean res = false;// 结果
 		try {
-			process = runtime.exec("ping " + ip + " -n 1 -w 300"); // PING
+			process = runtime.exec("ping " + ip + " -n 1 -w 100"); // PING
 			is = process.getInputStream(); // 实例化输入流
 			isr = new InputStreamReader(is);// 把输入流转换成字节流
 			br = new BufferedReader(isr);// 从字节中读取文本
@@ -139,6 +179,8 @@ public class pingapp{
 		}
 		return result;
 	}
+	
+	
 	private void resta() {
 		jt.setText("");
 		iplist.clear();
